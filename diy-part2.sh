@@ -73,7 +73,7 @@ config wifi-iface 'default_radio1'
 	option device 'radio1'
 	option network 'lan'
 	option mode 'ap'
-	option ssid 'Fudy_5G'
+	option ssid '栋仔_5G'
 	option encryption 'psk2'
 	option key '18851575507'
 EOF
