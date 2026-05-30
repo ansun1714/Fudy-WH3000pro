@@ -1,0 +1,121 @@
+#!/bin/sh /etc/rc.common
+
+START=99
+USE_PROCD=1
+
+gen_msd_conf() {
+	cat <<-EOF > /var/etc/msd_lite.conf
+<?xml version="1.0" encoding="utf-8"?>
+<msd>
+	<log>
+		<file>/var/log/msd_lite.log</file>
+	</log>
+	<threadPool>
+		<threadsCountMax>${threads}</threadsCountMax>
+		<fBindToCPU>yes</fBindToCPU>
+		<fCacheGetTimeSyscall>yes</fCacheGetTimeSyscall>
+		<timerGranularity>100</timerGranularity>
+	</threadPool>
+	<HTTP>
+		<bindList>
+			<bind><address>0.0.0.0:>${port}</address><fAcceptFilter>y</fAcceptFilter></bind>
+			<bind><address>[::]:>${port}</address></bind>
+		</bindList>
+		<hostnameList>
+			<hostname>*</hostname>
+		</hostnameList>
+	</HTTP>
+	<hubProfileList>
+		<hubProfile>
+			<fDropSlowClients>no</fDropSlowClients>
+			<fSocketHalfClosed>no</fSocketHalfClosed>
+			<fSocketTCPNoDelay>yes</fSocketTCPNoDelay>
+			<fSocketTCPNoPush>yes</fSocketTCPNoPush>
+			<precache>${buffer}</precache>
+			<ringBufSize>1024</ringBufSize>
+			<skt>
+				<sndBuf>512</sndBuf>
+				<sndLoWatermark>64</sndLoWatermark>
+				<congestionControl>htcp</congestionControl>
+			</skt>
+			<headersList>
+				<header>Pragma: no-cache</header>
+				<header>Content-Type: video/mpeg</header>
+				<header>ContentFeatures.DLNA.ORG: DLNA.ORG_OP=01;DLNA.ORG_CI=0;DLNA.ORG_FLAGS=01700000000000000000000000000000</header>
+				<header>TransferMode.DLNA.ORG: Streaming</header>
+			</headersList>
+		</hubProfile>
+	</hubProfileList>
+	<sourceProfileList>
+		<sourceProfile>
+			<skt>
+				<rcvBuf>512</rcvBuf>
+				<rcvLoWatermark>48</rcvLoWatermark>
+				<rcvTimeout>2</rcvTimeout>
+			</skt>
+			<multicast>
+				<ifName>${source}</ifName>
+				<rejoinTime>${rejointime}</rejoinTime>
+			</multicast>
+		</sourceProfile>
+	</sourceProfileList>
+</msd>
+	EOF
+}
+
+gen_rtp_conf() {
+	cat <<-EOF > /var/etc/msd_lite.conf
+[global]
+verbosity = 3
+maxclients = 20
+udpxy = yes
+workers = ${threads}
+upstream-interface = ${source}
+mcast-rejoin-interval = ${rejointime}
+buffer-pool-max-size = ${buffer}
+zerocopy-on-send = yes
+status-page-path = /status
+player-page-path = /player
+external-m3u = file:///www/iptv.m3u
+[bind]
+* ${port}
+	EOF
+}
+
+start_service() {
+	config_load "msd_lite"
+
+	config_get "type" "config" "type" "0"
+	config_get "port" "config" "port"
+	config_get "source" "config" "source"
+	config_get "threads" "config" "threads" "0"
+	config_get "buffer" "config" "buffer" "16384"
+	config_get "rejointime" "config" "rejointime" "0"
+
+	local enable
+	config_get_bool enable config enable 0
+	[ "${enable}" -gt 0 ] || return
+
+	if [ "$type" == "0" ]; then
+		PROG=/usr/bin/msd_lite
+		gen_msd_conf
+	else
+		PROG=/usr/bin/rtp2httpd
+		gen_rtp_conf
+	fi
+
+	procd_open_instance
+	procd_set_param pidfile /var/run/msd_lite.pid
+	procd_set_param command $PROG -c /var/etc/msd_lite.conf
+	procd_set_param respawn
+	procd_close_instance
+}
+
+reload_service() {
+	stop
+	start
+}
+
+service_triggers() {
+	procd_add_reload_trigger "msd_lite"
+}
