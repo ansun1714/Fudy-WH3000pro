@@ -1,4 +1,4 @@
-name: 编译 LEDE 固件（WH3000系列）
+name: 编译 Fudy_pro 固件（WH3000pro系列）
 
 on:
   workflow_dispatch:
