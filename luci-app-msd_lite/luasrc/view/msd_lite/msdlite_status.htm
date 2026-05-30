@@ -1,0 +1,25 @@
+<script type="text/javascript">//<![CDATA[
+XHR.poll(2, '<%=luci.dispatcher.build_url("admin", "services", "msd_lite", "status")%>', null,
+	function(x, data) {
+		var tb = document.getElementById('msdlite_status');
+		if (data && tb) {
+			if (data.running) {
+				var links = '<b><font color=green>MSD Lite / rtp2httpd <%:RUNNING%></b></font>';
+				if (data.rtp) {
+				links += "&nbsp;&nbsp;&nbsp;&nbsp;<input class=\"btn cbi-button cbi-button-apply \" type=\"button\" value=\" <%:Open Web Player%> \" onclick=\"window.open('http://" + window.location.hostname + ":" + data.port + "/player')\"/>"
+				links += "&nbsp;&nbsp;&nbsp;&nbsp;<input class=\"btn cbi-button cbi-button-apply \" type=\"button\" value=\" <%:Open Status Page%> \" onclick=\"window.open('http://" + window.location.hostname + ":" + data.port + "/status')\"/>"
+				}
+				tb.innerHTML = links;
+			} else {
+				tb.innerHTML = '<b><font color=red>MSD Lite / rtp2httpd <%:NOT RUNNING%></b></font>';
+			}
+		}
+	}
+);
+//]]></script>
+<style>.mar-10 {margin-left: 50px; margin-right: 10px;}</style>
+<fieldset class="cbi-section">
+	<p id="msdlite_status">
+		<em><%:Collecting data...%></em>
+	</p>
+</fieldset>
