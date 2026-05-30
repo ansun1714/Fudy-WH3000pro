@@ -11,7 +11,7 @@ mkdir -p files/etc/uci-defaults
 
 cat > files/etc/uci-defaults/01-system << 'EOF'
 #!/bin/sh
-uci set system.@system[0].hostname='WH3000'
+uci set system.@system[0].hostname='Fudy_pro'
 uci set system.@system[0].timezone='CST-8'
 uci set system.@system[0].zonename='Asia/Shanghai'
 uci commit system
@@ -55,9 +55,9 @@ config wifi-iface 'default_radio0'
 	option device 'radio0'
 	option network 'lan'
 	option mode 'ap'
-	option ssid 'WH3000_2.4G'
+	option ssid 'Camera_mao'
 	option encryption 'psk2'
-	option key '12345678'
+	option key '18921500010'
 
 config wifi-device 'radio1'
 	option type 'mac80211'
@@ -73,9 +73,9 @@ config wifi-iface 'default_radio1'
 	option device 'radio1'
 	option network 'lan'
 	option mode 'ap'
-	option ssid 'WH3000_5G'
+	option ssid 'Fudy_5G'
 	option encryption 'psk2'
-	option key '12345678'
+	option key '18851575507'
 EOF
 echo ">>> [4] WiFi 预配置完成"
 
@@ -124,14 +124,14 @@ echo ">>> [6] Docker 数据目录配置完成"
 # =====================================================
 # 7. QModem 自动启用
 # =====================================================
-cat > files/etc/uci-defaults/88-qmodem << 'EOF'
+#cat > files/etc/uci-defaults/88-qmodem << 'EOF'
 #!/bin/sh
-/etc/init.d/qmodem enable >/dev/null 2>&1
-/etc/init.d/qmodem start >/dev/null 2>&1
-exit 0
-EOF
-chmod +x files/etc/uci-defaults/88-qmodem
-echo ">>> [7] QModem 启用完成"
+#/etc/init.d/qmodem enable >/dev/null 2>&1
+#/etc/init.d/qmodem start >/dev/null 2>&1
+#exit 0
+#EOF
+#chmod +x files/etc/uci-defaults/88-qmodem
+#echo ">>> [7] QModem 启用完成"
 
 # =====================================================
 # 8. 系统网络优化
