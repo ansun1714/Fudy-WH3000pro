@@ -1,0 +1,63 @@
+<%
+local uci     = require "luci.model.uci".cursor()
+local sys     = require "luci.sys"
+
+local enabled    = uci:get("iptv_manager", "global", "enabled") or "0"
+local program    = uci:get("iptv_manager", "global", "program") or "rtp2httpd"
+local prog_label = (program == "msd") and "msd_lite" or "rtp2HTTPd"
+
+-- msd_lite 实际运行的是 rtp2httpd 二进制，pidof msd_lite 永远找不到
+-- 两个程序都用 init.d running 检测，这是唯一可靠的方式
+local is_running = false
+if program == "msd" then
+    is_running = (sys.call(
+        "/etc/init.d/msd_lite running >/dev/null 2>&1") == 0)
+else
+    is_running = (sys.call(
+        "/etc/init.d/rtp2httpd running >/dev/null 2>&1") == 0)
+end
+
+local port = ""
+if program == "msd" then
+    port = uci:get("msd_lite", "config", "port") or "4022"
+else
+    uci:foreach("rtp2httpd", "rtp2httpd", function(s)
+        port = s.port or "5140"
+    end)
+    if port == "" then port = "5140" end
+end
+%>
+<fieldset class="cbi-section" style="margin-bottom:1.2em;">
+<div style="padding:12px 18px;background:#f7f7f7;border-radius:4px;
+            display:flex;align-items:center;gap:18px;flex-wrap:wrap;">
+
+  <span style="font-size:26px;line-height:1;
+               color:<%= is_running and '#27ae60' or '#e74c3c' %>">●</span>
+
+  <div>
+    <div style="font-weight:bold;font-size:15px;">
+      <% if is_running then %>
+        <%=translate("运行中")%> — <%= prog_label %>
+      <% else %>
+        <%=translate("已停止")%> — <%= prog_label %>
+      <% end %>
+    </div>
+    <div style="font-size:12px;color:#888;margin-top:3px;">
+      <%=translate("服务开关")%>：
+      <strong><%= enabled == "1"
+          and translate("已启用") or translate("未启用") %></strong>
+      <% if is_running and port ~= "" then %>
+        &nbsp;|&nbsp;<%=translate("端口")%>：<strong><%= port %></strong>
+      <% end %>
+    </div>
+  </div>
+
+  <div style="margin-left:auto;">
+    <a class="btn cbi-button"
+       href="<%=luci.dispatcher.build_url('admin/services/iptv_manager')%>">
+      ↻ <%=translate("刷新状态")%>
+    </a>
+  </div>
+
+</div>
+</fieldset>
